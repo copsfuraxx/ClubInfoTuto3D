@@ -93,3 +93,5 @@ Dans l'Inspecteur, activez Shadow -> Enabled en cochant la case.
 ![image 16](.img/cours16.png)
 
 Voilà notre point de départ. Dans la prochaine partie, nous travaillerons sur la scène du joueur et le mouvement de base.
+
+[Suivant](https://github.com/copsfuraxx/ClubInfoTuto3D/tree/part2#sc%C3%A8ne-player-et-actions-dentr%C3%A9e)
