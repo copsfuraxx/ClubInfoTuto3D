@@ -1,95 +1,95 @@
+# Scène Player et actions d'entrée
 
-# Création du projet
+Dans les deux prochaines leçons, nous allons concevoir la scène du joueur, enregistrer des actions d'entrée personnalisées, et coder le mouvement du joueur. À la fin, vous aurez un personnage jouable similaire à un subwaysurfer.
 
-Dans cette première partie, nous allons mettre en place la zone de jeu. Commençons par créer le projet et configurer la scène de jeu.
-
-Créez le projet.
+Le personage à un besoin d'un visuel, je vous fournit donc un model 3D que vous devrez importer dans Godot. Creez d'abord un dossiez Asset.
 
 ![image 1](.img/cours1.png)
 
-![image 2](.img/cours2.png)
+Ensuite il vous suffit de drag and drop le fichier depuis votre explorateur de fichier vers Godot.
+
+![gif 2](.img/cours2.gif)
+
+***
+
+> ## Note
+> Les fichiers .glb contiennent des données de scènes 3D basées sur la spécification open-source GLTF 2.0. C'est une alternative moderne et puissante à un format propriétaire comme FBX, que Godot prend également en charge. Pour produire ces fichiers, nous avons conçu le modèle dans Blender 3D et l'avons exporté en GLTF.
+
+***
+
+Créez une nouvelle scène héritée en allant dans le menu Fichier en bas à gauche et en fesant un clique droit sur Charactere.glb.
 
 ![image 3](.img/cours3.png)
 
-# Configuration de la zone jouable
-
-Nous allons créer notre scène principale avec un simple Node comme racine. Dans le dock Scene, cliquez sur le bouton Ajouter un Nœud représenté par une icône "+" en haut à gauche et double-cliquez sur Node. Nommez le nœud "Main". Alternativement, pour ajouter un nœud à la scène, vous pouvez appuyer sur Ctrl + a (ou Cmd + a sur macOS).
+Changez le type noeud Charactere en KynematicBody en fesant clique droit sur le noeud puis renomer le noeud en Player.
 
 ![image 4](.img/cours4.png)
 
-Enregistrez la scène en tant que Main.tscn en appuyant sur Ctrl + s (Cmd + s sur MacOS).
-
-Nous allons commencer par ajouter un sol qui va empêcher le perosnnage de tomber. Pour créer des collisionneurs statiques comme le sol, les murs, ou les plafonds, vous pouvez utiliser les nœuds StaticBody. Ils ont besoin de nœuds enfants pour définir la zone de collision. Avec le nœud Main sélectionné, ajoutez un nœud StaticBody, puis une CollisionShape. Renommez le StaticBody en Ground.
-
 ![image 5](.img/cours5.png)
 
-Une icône d'avertissement apparaît à côté de CollisionShape parce que nous n'avons pas défini sa forme. Si vous cliquez sur l'icône, une fenêtre contextuelle apparaît pour vous donner plus d'informations.
+Les corps cinématiques sont complémentaires à la zone et aux corps rigides utilisés dans le tutoriel du jeu 2D. Comme les corps rigides, ils peuvent se déplacer et entrer en collision avec l'environnement, mais au lieu d'être contrôlés par le moteur physique, vous dictez leur mouvement. Vous verrez comment utiliser les fonctionnalités uniques du nœud quand nous coderons les mécaniques de saut et d'écrasement.
+
+***
+
+> ## Voir aussi
+> Pour en savoir plus sur les différents types de nœuds de physique, consultez la page [Introduction à la physique](https://docs.godotengine.org/fr/stable/tutorials/physics/physics_introduction.html#doc-physics-introduction).
+
+***
+
+Comme avec tous les types de nœuds physiques, nous avons besoin d'une forme de collision pour que notre personnage puisse collisionner avec l'environnement. Sélectionnez le nœud Player à nouveau et ajoutez-lui un CollisionShape. Dans l'Inspecteur, assignez une BoxShape à la propriété Shape. L'armature de la sphère apparaît en dessous du personnage.
 
 ![image 6](.img/cours6.png)
 
-Pour créer une forme, avec le CollisionShape sélectionné, dirigez-vous vers l'Inspecteur et cliquez sur le champ [vide] à côté de la propriété Shape. Créez un nouveau Box Shape.
-
 ![image 7](.img/cours7.png)
-
-La forme de boîte est parfaite pour les sols plats et les murs. Son épaisseur la rend fiable même pour bloquer les objets qui se déplacent rapidement.
-
-L'armature de la boîte apparaît dans la fenêtre avec trois points orange. Vous pouvez cliquer et faire glisser ces points pour modifier la taille de la forme interactivement. Nous pouvons également définir la taille précisément dans l'inspecteur. Cliquez sur la BoxShape pour étendre la ressource. Définissez ses Extents à 30 sur l'axe X, 1 sur l'axe Y, et 30 sur l'axe Z.
 
 ![image 8](.img/cours8.png)
 
-***
-
-> ## Note
-> En 3D, les unités de translation et de taille sont en mètres. La taille totale de la boîte est le double de ses étendues : 60 par 60 mètres sur le plan du sol et 2 unités de hauteur. Le plan du sol est défini par les axes X et Z, tandis que l'axe Y représente la hauteur.
-
-***
-
-Les formes de collision sont invisibles. Nous devons ajouter un sol visuel qui va avec. Sélectionnez le nœud Ground et ajoutez-lui un MeshInstance comme enfant.
+Il s'agira de la forme utilisée par le moteur physique pour collisionner avec l'environnement, nous voulons donc qu'elle s'adapte mieux au modèle 3D.Avant de modifier il faux changer l'etat de l'animation car notre player de va pas courrir dans cette position. Pour cela cliquez sur le noeud AnimationPlayer puis en bas au milieu selectionner l'animation run.
 
 ![image 9](.img/cours9.png)
 
-Dans l'Inspecteur, cliquez sur le champ à côté de Mesh et créez une ressource CubeMesh pour créer un cube visible.
-
 ![image 10](.img/cours10.png)
 
-Une fois de plus, il est trop petit par défaut. Cliquez sur l'icône de cube pour étendre la ressource et définissez sa Size à 60, 2, et 60. Comme la ressource de cube fonctionne avec une taille plutôt que des étendues, nous devons utiliser ces valeurs pour qu'elles correspondent à notre forme de collision.
+Enregistrez la scène sous le nom de Player.tscn.
+
+Les nœuds étant prêts, nous pouvons presque commencer à coder. Mais d'abord, nous devons définir quelques actions d'entrée.
+
+# Création d'actions d'entrée
+
+Pour déplacer le personnage, nous écouterons l'entrée du joueur, comme l'appui sur les touches fléchées. Dans Godot, plutôt que d'écrire toutes les liaisons dans le code, il y a un système puissant qui nous permet d'attribuer une étiquette à un ensemble de touches et de boutons. Cela simplifie nos scripts et les rend plus lisibles.
+
+Ce système est l'Input Map ("Contrôles" en français). Pour accéder à son éditeur, allez dans le menu Projet et sélectionnez Paramètres du projet....
 
 ![image 11](.img/cours11.png)
 
-Vous devriez voir une large dalle grise qui couvre la grille et des axes bleus et rouges dans la fenêtre.
-
-Nous allons déplacer le sol plus bas pour voir la grille du sol. Sélectionnez le nœud Ground, maintenez la touche Ctrl enfoncée pour activer l'accrochage à la grille (Cmd sur MacOS), puis cliquez et faîtes glisser vers le bas sur l'axe Y. C'est la flèche verte sur le gadget de déplacement.
+En haut, il y a plusieurs onglets. Cliquez sur Contrôles. Cette fenêtre vous permet d'ajouter de nouvelles actions en haut ; ce sont vos étiquettes. Dans la partie inférieure, vous pouvez lier des clés à ces actions.
 
 ![image 12](.img/cours12.png)
 
-***
+Les projets Godot viennent avec des actions prédéfinies conçues pour la conception d'interfaces utilisateur, que nous pourrions utiliser ici. Mais nous allons définir nos propres actions pour prendre en charge les manettes.
 
-> ## Note
-> Si vous ne pouvez pas voir le manipulateur d'objets 3D comme sur l'image ci-dessus, assurez-vous que le Mode sélection est actif dans la barre d'outils au-dessus de la vue.
+Nous allons nommer nos actions move_left, move_right, jump et slide.
 
-***
+Pour ajouter une action, écrivez son nom dans la barre en haut et appuyez sur Entrée.
 
 ![image 13](.img/cours13.png)
 
-Déplacer le sol de 1 mètre vers le bas. Un message dans le coin en bas à gauche de la fenêtre vous indique de combien vous déplacez le nœud.
+Créez les cinq actions. Votre fenêtre devrait toutes les répertorier en bas.
 
 ![image 14](.img/cours14.png)
 
-***
-
-> ## Note
->Déplaer le nœud Ground vers le bas déplace ses deux enfants avec lui. Assurez-vous de déplacer le nœud Ground, pas le MeshInstance ni le CollisionShape.
-
-***
-
-Ajoutons une lumière directionnelle pour que notre scène ne soit pas toute grise. Sélectionnez le nœud Main et ajoutez-lui une DirectionalLight en enfant. Nous devons la déplacer et la pivoter. Déplacez-la vers le haut en faisant glisser la flèche verte du manipulateur et faîtes glisser l'arc rouge pour la faire tourner autour de l'axe X, jusqu'à ce que le sol soit éclairé.
-
-Dans l'Inspecteur, activez Shadow -> Enabled en cochant la case.
+Pour lier une touche ou un bouton à une action, cliquez sur le bouton "+" à sa droite. Faîtes-le pour move_left et dans le menu déroulant, cliquez sur Touche physique( une touche physique ignore le type de clavier comme QYERTY ou AZERTY).
 
 ![image 15](.img/cours15.png)
 
-À ce stade, votre projet devrait ressembler à ceci.
+Cette option vous permet d'ajouter une entrée clavier. Une fenêtre contextuelle apparaît et attend que vous appuyiez sur une touche. Appuyez sur la flèche de gauche et cliquez sur OK.
+
+Faites de même pour la touche Q.
+
+Faîtes de même pour les autres actions. Par exemple, liez la flèche de droite, D, et l'axe droit du joystick gauche à move_right. Après avoir lié toutes les touches, votre interface devrait ressembler à ceci.
 
 ![image 16](.img/cours16.png)
 
-Voilà notre point de départ. Dans la prochaine partie, nous travaillerons sur la scène du joueur et le mouvement de base.
+Voilà toutes les actions dont nous avons besoin pour ce jeu. Vous pouvez utiliser ce menu pour étiqueter tout groupe de touches et de boutons dans vos projets.
+
+Dans la partie suivante, nous allons coder et tester le mouvement du joueur.
