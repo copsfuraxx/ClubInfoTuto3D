@@ -20,3 +20,9 @@ Vous allez apprendre à :
 - Dessiner une interface utilisateur sur un jeu 3D.
 
 - Et plus encore.
+
+[Partie 1](https://github.com/copsfuraxx/ClubInfoTuto3D/tree/part1#cr%C3%A9ation-du-projet)
+
+[Partie 2](https://github.com/copsfuraxx/ClubInfoTuto3D/tree/part2#sc%C3%A8ne-player-et-actions-dentr%C3%A9e)
+
+[Partie 3](https://github.com/copsfuraxx/ClubInfoTuto3D/tree/part3#d%C3%A9placer-le-joueur-avec-du-code)
