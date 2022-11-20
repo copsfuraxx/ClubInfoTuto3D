@@ -1,9 +1,10 @@
-[gd_scene load_steps=23 format=2]
+[gd_scene load_steps=33 format=2]
 
 [ext_resource path="res://Assets/Material_001.material" type="Material" id=1]
 [ext_resource path="res://Assets/Material.material" type="Material" id=2]
 [ext_resource path="res://Assets/Material_002.material" type="Material" id=3]
 [ext_resource path="res://Assets/Material_003.material" type="Material" id=4]
+[ext_resource path="res://Player.gd" type="Script" id=5]
 
 [sub_resource type="ArrayMesh" id=1]
 resource_name = "Character_Cube002"
@@ -1451,6 +1452,7 @@ tracks/22/keys = PoolRealArray( 0, 1, 0, -0.679392, 0, 0, 0, 0, 1, 1, 1, 1, 0.06
 [sub_resource type="Animation" id=11]
 resource_name = "run"
 length = 0.666667
+loop = true
 tracks/0/type = "transform"
 tracks/0/path = NodePath("Skeleton2/Skeleton:feet.L")
 tracks/0/interp = 1
@@ -2601,12 +2603,48 @@ tracks/22/imported = false
 tracks/22/enabled = true
 tracks/22/keys = PoolRealArray( 0, 1, 0, 0.0842625, 0, 0, -2.25102e-08, 0.167538, 0.985866, 1, 1, 1, 0.333333, 1, 0, 0.0842625, 0, 0, -2.25102e-08, 0.167538, 0.985866, 1, 1, 1 )
 
+[sub_resource type="AnimationNodeAnimation" id=25]
+animation = "fall"
+
+[sub_resource type="AnimationNodeAnimation" id=19]
+animation = "jump"
+
+[sub_resource type="AnimationNodeAnimation" id=20]
+animation = "run"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id=21]
+xfade_time = 0.1
+
+[sub_resource type="AnimationNodeStateMachineTransition" id=22]
+xfade_time = 0.1
+
+[sub_resource type="AnimationNodeStateMachineTransition" id=26]
+xfade_time = 0.1
+
+[sub_resource type="AnimationNodeStateMachineTransition" id=27]
+xfade_time = 0.1
+
+[sub_resource type="AnimationNodeStateMachine" id=23]
+states/fall/node = SubResource( 25 )
+states/fall/position = Vector2( 381, 558.912 )
+states/jump/node = SubResource( 19 )
+states/jump/position = Vector2( 535, 447 )
+states/run/node = SubResource( 20 )
+states/run/position = Vector2( 288, 447 )
+transitions = [ "run", "jump", SubResource( 21 ), "jump", "run", SubResource( 22 ), "run", "fall", SubResource( 26 ), "fall", "run", SubResource( 27 ) ]
+start_node = "run"
+graph_offset = Vector2( -56, 408.912 )
+
+[sub_resource type="AnimationNodeStateMachinePlayback" id=24]
+
 [sub_resource type="BoxShape" id=18]
-extents = Vector3( 1, 2.6, 1.75 )
+extents = Vector3( 0.4, 0.9, 0.6 )
 
 [node name="Player" type="KinematicBody"]
+script = ExtResource( 5 )
 
 [node name="Skeleton2" type="Spatial" parent="."]
+transform = Transform( 0.35, 0, 0, 0, 0.35, 0, 0, 0, 0.35, 0, 0, 0 )
 
 [node name="Skeleton" type="Skeleton" parent="Skeleton2"]
 bones/0/name = "Bone"
@@ -2746,6 +2784,12 @@ anims/wall_bump = SubResource( 15 )
 anims/wall_jump = SubResource( 16 )
 anims/wall_run = SubResource( 17 )
 
+[node name="AnimationTree" type="AnimationTree" parent="."]
+tree_root = SubResource( 23 )
+anim_player = NodePath("../AnimationPlayer")
+active = true
+parameters/playback = SubResource( 24 )
+
 [node name="CollisionShape" type="CollisionShape" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0.25 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0.05 )
 shape = SubResource( 18 )

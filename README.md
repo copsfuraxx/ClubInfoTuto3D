@@ -1,95 +1,176 @@
-# Scène Player et actions d'entrée
+# Déplacer le joueur avec du code
 
-Dans les deux prochaines leçons, nous allons concevoir la scène du joueur, enregistrer des actions d'entrée personnalisées, et coder le mouvement du joueur. À la fin, vous aurez un personnage jouable similaire à un subwaysurfer.
+C'est l'heure de coder ! Nous allons utiliser les actions que nous avons créées dans la partie précédente pour déplacer le personnage.
 
-Le personage à un besoin d'un visuel, je vous fournit donc un model 3D que vous devrez importer dans Godot. Creez d'abord un dossiez Asset.
+Faîtes un clic droit sur le nœud Player et sélectionnez Attacher un script pour lui ajouter un nouveau script. Dans la fenêtre contextuelle, mettez le Modèle à Empty avant d'appuyer sur le bouton Créer.
 
-![image 1](.img/cours1.png)
+![image1](.img/cours1.png)
 
-Ensuite il vous suffit de drag and drop le fichier depuis votre explorateur de fichier vers Godot.
+Commençons par les propriétés de la classe. Nous allons définir une vitesse de déplacement, une vitesse de chute et d'autre utile pour le deplacement du joueur.
 
-![gif 2](.img/cours2.gif)
+***
+
+## GDScript
+ 
+```java
+extends KinematicBody
+
+export var speed = 10.0
+export var fall_speed = 15.0
+export var jump_speed = 15.0
+export var swap_lane_speed = 15.0
+
+var positions = [2.0, .0, -2.0]
+var position = 1
+var next_position = 1
+var is_swap_lane = false
+var is_jumping = false
+var timer = .0
+var jump_time = .5
+```
+
+***
 
 ***
 
 > ## Note
-> Les fichiers .glb contiennent des données de scènes 3D basées sur la spécification open-source GLTF 2.0. C'est une alternative moderne et puissante à un format propriétaire comme FBX, que Godot prend également en charge. Pour produire ces fichiers, nous avons conçu le modèle dans Blender 3D et l'avons exporté en GLTF.
+> Les valeurs sont assez différentes du code 2D car les distances sont exprimées en mètres. En 2D, mille unités (pixels) peuvent ne correspondre qu'à la moitié de la largeur de votre écran, en 3D, c'est un kilomètre.
 
 ***
 
-Créez une nouvelle scène héritée en allant dans le menu Fichier en bas à gauche et en fesant un clique droit sur Charactere.glb.
+Codons le déplacement maintenant. Nous commençons par calculer le vecteur de direction en utilisant l'objet `Input` global, dans `_physics_process()`.
 
-![image 3](.img/cours3.png)
+***
 
-Changez le type noeud Charactere en KynematicBody en fesant clique droit sur le noeud puis renomer le noeud en Player.
+## GDScript
 
-![image 4](.img/cours4.png)
+```java
+func _physics_process(delta):
+	var velocity = Vector3.ZERO
+	velocity.z = speed
+	
+	if Input.is_action_just_pressed("jump") and not is_jumping:
+		is_jumping = true
+		timer = jump_time
+		$AnimationPlayer.play("jump")
+	
+	if not is_swap_lane:
+		if Input.is_action_pressed("move_right") and not Input.is_action_pressed("move_left") and position < 2:
+			is_swap_lane = true
+			next_position += 1
+		if Input.is_action_pressed("move_left") and not Input.is_action_pressed("move_right") and position > 0:
+			is_swap_lane = true
+			next_position -= 1
+	if is_swap_lane:
+		if next_position < position:
+			if translation.x + speed * delta > positions[next_position]:
+				position = next_position
+				is_swap_lane = false
+			else:
+				velocity.x = swap_lane_speed
+		elif next_position > position:
+			if translation.x - speed * delta < positions[next_position]:
+				position = next_position
+				is_swap_lane = false
+			else:
+				velocity.x = -swap_lane_speed
+	if timer > .0:
+		velocity.y = jump_speed
+		timer -= delta
+	else:
+		velocity.y = -fall_speed
+	velocity = move_and_slide(velocity, Vector3.UP)
+	if is_on_floor():
+		velocity.y = .0
+		if is_jumping:
+			is_jumping = false
+            $AnimationPlayer.play("run")
+	else:
+		if not is_jumping:
+			is_jumping = true
+            $AnimationPlayer.play("fall")
+```
 
-![image 5](.img/cours5.png)
+***
 
-Les corps cinématiques sont complémentaires à la zone et aux corps rigides utilisés dans le tutoriel du jeu 2D. Comme les corps rigides, ils peuvent se déplacer et entrer en collision avec l'environnement, mais au lieu d'être contrôlés par le moteur physique, vous dictez leur mouvement. Vous verrez comment utiliser les fonctionnalités uniques du nœud quand nous coderons les mécaniques de saut et d'écrasement.
+Ici, nous allons faire tous nos calculs dans la fonction virtuelle `_physics_process()`. Comme `_process()`, cela nous permet de mettre à jour le nœud à chaque image, mais elle est conçue spécifiquement pour le code lié à la physique, comme le déplacement d'un corps cinématique ou rigide.
 
 ***
 
 > ## Voir aussi
-> Pour en savoir plus sur les différents types de nœuds de physique, consultez la page [Introduction à la physique](https://docs.godotengine.org/fr/stable/tutorials/physics/physics_introduction.html#doc-physics-introduction).
+> Pour en savoir plus sur la différence entre `_process()` et `_physics_process()`, voir Traitement physique et traitement passif.
 
 ***
 
-Comme avec tous les types de nœuds physiques, nous avons besoin d'une forme de collision pour que notre personnage puisse collisionner avec l'environnement. Sélectionnez le nœud Player à nouveau et ajoutez-lui un CollisionShape. Dans l'Inspecteur, assignez une BoxShape à la propriété Shape. L'armature de la sphère apparaît en dessous du personnage.
+Pour l'animation de course initial vous devez rajouter
 
-![image 6](.img/cours6.png)
+***
 
-![image 7](.img/cours7.png)
+## GDScript
 
-![image 8](.img/cours8.png)
+```java
+func _ready():
+	$AnimationPlayer.play("run")
+```
 
-Il s'agira de la forme utilisée par le moteur physique pour collisionner avec l'environnement, nous voulons donc qu'elle s'adapte mieux au modèle 3D.Avant de modifier il faux changer l'etat de l'animation car notre player de va pas courrir dans cette position. Pour cela cliquez sur le noeud AnimationPlayer puis en bas au milieu selectionner l'animation run.
+***
 
-![image 9](.img/cours9.png)
+# Tester le mouvement de notre joueur
 
-![image 10](.img/cours10.png)
+Nous allons mettre notre joueur dans la scène Main pour le tester. Pour ce faire, nous devons instancier le joueur, puis ajouter une caméra. Contrairement à la 2D, en 3D, vous ne verrez rien si votre scène n'a pas de caméra pointant vers quelque chose.
 
-Enregistrez la scène sous le nom de Player.tscn.
+Enregistrez votre scène Player et ouvrez la scène Main. Vous pouvez cliquer sur l'onglet Main en haut de l'éditeur pour le faire.
 
-Les nœuds étant prêts, nous pouvons presque commencer à coder. Mais d'abord, nous devons définir quelques actions d'entrée.
+Si vous avez déjà fermé la scène, dirigez-vous vers le dock Système de fichiers et double-cliquez sur Maint.tscn pour la rouvrir.
 
-# Création d'actions d'entrée
+Pour instancier le Player, faîtes un clic droit sur le nœud Main et sélectionnez Instancier une scène enfant.
 
-Pour déplacer le personnage, nous écouterons l'entrée du joueur, comme l'appui sur les touches fléchées. Dans Godot, plutôt que d'écrire toutes les liaisons dans le code, il y a un système puissant qui nous permet d'attribuer une étiquette à un ensemble de touches et de boutons. Cela simplifie nos scripts et les rend plus lisibles.
+![image2](.img/cours2.png)
 
-Ce système est l'Input Map ("Contrôles" en français). Pour accéder à son éditeur, allez dans le menu Projet et sélectionnez Paramètres du projet....
+Dans la fenêtre contextuelle, double-cliquez sur Player.tscn. Le personnage devrait apparaître au milieu de la fenêtre d'affichage.
 
-![image 11](.img/cours11.png)
+# Ajout d'une caméra
 
-En haut, il y a plusieurs onglets. Cliquez sur Contrôles. Cette fenêtre vous permet d'ajouter de nouvelles actions en haut ; ce sont vos étiquettes. Dans la partie inférieure, vous pouvez lier des clés à ces actions.
+Ajoutons ensuite la caméra. Faîtes un clic-droit sur le nœud Main à nouveau, mais sélectionnez Ajouter un nœud enfant cette fois. Sélectionnez.
 
-![image 12](.img/cours12.png)
+Vous pouvez soit placer la camera sous Player pour qu'elle suive tout ces mouvement, soit rajoutez un petit script pour que la camera ne suive que l'avancé du Player. J'ai préféré la secode option.
 
-Les projets Godot viennent avec des actions prédéfinies conçues pour la conception d'interfaces utilisateur, que nous pourrions utiliser ici. Mais nous allons définir nos propres actions pour prendre en charge les manettes.
+***
 
-Nous allons nommer nos actions move_left, move_right, jump et slide.
+## GDScript
 
-Pour ajouter une action, écrivez son nom dans la barre en haut et appuyez sur Entrée.
+```java
+extends Camera
 
-![image 13](.img/cours13.png)
+onready var j = get_node("../Player")
+onready var dist = j.translation.z - translation.z
 
-Créez les cinq actions. Votre fenêtre devrait toutes les répertorier en bas.
+func _process(_delta):
+	translation.z = j.translation.z - dist
+```
 
-![image 14](.img/cours14.png)
+***
 
-Pour lier une touche ou un bouton à une action, cliquez sur le bouton "+" à sa droite. Faîtes-le pour move_left et dans le menu déroulant, cliquez sur Touche physique( une touche physique ignore le type de clavier comme QYERTY ou AZERTY).
+Remarquez la case à cocher Aperçu qui apparaît en haut à gauche lorsque la Camera est sélectionnée. Vous pouvez cliquer dessus pour avoir un aperçu de la projection de la caméra dans le jeu.
 
-![image 15](.img/cours15.png)
+![image3](.img/cours3.png)
 
-Cette option vous permet d'ajouter une entrée clavier. Une fenêtre contextuelle apparaît et attend que vous appuyiez sur une touche. Appuyez sur la flèche de gauche et cliquez sur OK.
+Dans la barre d'outils juste au-dessus de la fenêtre d'affichage, cliquez sur Affichage, puis 2 vues. Vous pouvez également appuyer sur Ctrl + 2 (Cmd + 2 sur MacOS).
 
-Faites de même pour la touche Q.
+![image4](.img/cours4.png)
 
-Faîtes de même pour les autres actions. Par exemple, liez la flèche de droite, D, et l'axe droit du joystick gauche à move_right. Après avoir lié toutes les touches, votre interface devrait ressembler à ceci.
+Dans le vue du bas, sélectionnez la Camera et activez l'aperçu de la caméra en cliquant sur la case à cocher.
 
-![image 16](.img/cours16.png)
+![image5](.img/cours5.png)
 
-Voilà toutes les actions dont nous avons besoin pour ce jeu. Vous pouvez utiliser ce menu pour étiqueter tout groupe de touches et de boutons dans vos projets.
+Dans la vue du haut, déplacez la caméra d'environ -35 unités sur l'axe Z (le bleu) et 3 sur l'axe Y (le vert). N'oublier de tourner la camera vers le Player.
 
-Dans la partie suivante, nous allons coder et tester le mouvement du joueur.
+![image6](.img/cours6.png)
+
+Vous pouvez lancer la scène en appuyant sur F6 et utiliser les touches fléchées pour déplacer le personnage.
+
+***
+
+# Bonus
+
+Actuellement si vous utilisez les animations vous pouvez voir qu'il n'y a pas de transition entre les animation. Si vous souaitez les avoir recuperez le code de cette branche(nous ne verrons pas comment ca marche dans ce tuto)
