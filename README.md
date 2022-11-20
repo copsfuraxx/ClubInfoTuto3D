@@ -93,3 +93,5 @@ Faîtes de même pour les autres actions. Par exemple, liez la flèche de droite
 Voilà toutes les actions dont nous avons besoin pour ce jeu. Vous pouvez utiliser ce menu pour étiqueter tout groupe de touches et de boutons dans vos projets.
 
 Dans la partie suivante, nous allons coder et tester le mouvement du joueur.
+
+[Suivant](https://github.com/copsfuraxx/ClubInfoTuto3D/tree/part3#d%C3%A9placer-le-joueur-avec-du-code)
